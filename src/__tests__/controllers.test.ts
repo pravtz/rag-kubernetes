@@ -171,15 +171,7 @@ describe('RAG Controller', () => {
 
       const mockReq = {} as any;
 
-      await getApiReadiness(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(503);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'not-ready',
-          error: expect.stringContaining('failed'),
-        }),
-      );
+      await expect(getApiReadiness(mockReq, mockRes)).rejects.toThrow('Readiness check failed');
     });
   });
 
@@ -218,14 +210,8 @@ describe('RAG Controller', () => {
 
       const mockReq = {} as any;
 
-      await getQdrantInfo(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(503);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'error',
-          error: expect.stringContaining('diagnostics'),
-        }),
+      await expect(getQdrantInfo(mockReq, mockRes)).rejects.toThrow(
+        'Failed to read Qdrant diagnostics',
       );
     });
 

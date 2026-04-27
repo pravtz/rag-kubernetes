@@ -1,6 +1,7 @@
 import multer from 'multer';
 import path from 'path';
-import { Request } from 'express';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
+import { AppError } from '../utils/appError';
 
 const storage = multer.diskStorage({
   destination: '/tmp',
@@ -31,3 +32,27 @@ export const uploadPdf = multer({
   fileFilter: pdfFilter,
   limits: { fileSize: 50 * 1024 * 1024 },
 }).single('file');
+
+export const uploadPdfHandler: RequestHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  uploadPdf(req, res, (err) => {
+    if (!err) {
+      next();
+      return;
+    }
+
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+      next(
+        new AppError('File too large. Maximum size is 50MB', 400, 'UPLOAD_ERROR', {
+          multerCode: err.code,
+        }),
+      );
+      return;
+    }
+
+    next(new AppError((err as Error).message, 400, 'UPLOAD_ERROR'));
+  });
+};

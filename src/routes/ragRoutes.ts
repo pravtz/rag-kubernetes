@@ -1,7 +1,6 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { uploadPdf } from '../middleware/uploadMiddleware';
+import { Router } from 'express';
+import { uploadPdfHandler } from '../middleware/uploadMiddleware';
 import { asyncHandler } from '../utils/asyncHandler';
-import { AppError } from '../utils/appError';
 import {
   ingest,
   query,
@@ -19,15 +18,7 @@ router.get('/qdrant-info', asyncHandler(getQdrantInfo));
 // Wrap multer so its errors are forwarded as JSON rather than raw Express errors
 router.post(
   '/ingest',
-  (req: Request, res: Response, next: NextFunction) => {
-    uploadPdf(req, res, (err) => {
-      if (err) {
-        next(new AppError((err as Error).message, 400, 'UPLOAD_ERROR'));
-        return;
-      }
-      next();
-    });
-  },
+  uploadPdfHandler,
   asyncHandler(ingest),
 );
 

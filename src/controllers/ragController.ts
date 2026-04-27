@@ -81,66 +81,68 @@ export async function getApiStatus(_req: Request, res: Response): Promise<void> 
 }
 
 export async function getQdrantInfo(_req: Request, res: Response): Promise<void> {
-  try {
-    const diagnostics = await getQdrantDiagnostics();
+  let diagnostics: Awaited<ReturnType<typeof getQdrantDiagnostics>>;
 
-    res.status(200).json({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      qdrant: diagnostics,
-      rag: {
-        topK: config.chunking.topK,
-        embeddingModel: config.openai.embeddingModel,
-        collectionName: config.qdrant.collectionName,
-      },
-    });
-  } catch (error) {
-    console.error('Qdrant diagnostics error:', error);
-    res.status(503).json({
-      status: 'error',
-      timestamp: new Date().toISOString(),
-      error: 'Failed to read Qdrant diagnostics',
+  try {
+    diagnostics = await getQdrantDiagnostics();
+  } catch {
+    throw new AppError('Failed to read Qdrant diagnostics', 503, 'DEPENDENCY_ERROR', {
       qdrantUrl: config.qdrant.url,
       collectionName: config.qdrant.collectionName,
     });
   }
+
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    qdrant: diagnostics,
+    rag: {
+      topK: config.chunking.topK,
+      embeddingModel: config.openai.embeddingModel,
+      collectionName: config.qdrant.collectionName,
+    },
+  });
 }
 
 export async function getApiReadiness(_req: Request, res: Response): Promise<void> {
+  let qdrantReachable = false;
+
   try {
-    const qdrantReachable = await isQdrantReachable();
+    qdrantReachable = await isQdrantReachable();
+  } catch {
+    throw new AppError('Readiness check failed', 503, 'DEPENDENCY_ERROR');
+  }
 
-    if (!qdrantReachable) {
-      res.status(503).json({
-        status: 'not-ready',
-        timestamp: new Date().toISOString(),
-        checks: {
-          qdrant: 'unreachable',
-          collection: 'unknown',
-        },
-      });
-      return;
-    }
-
-    const diagnostics = await getQdrantDiagnostics();
-    const isReady = diagnostics.reachable && diagnostics.collectionExists;
-
-    res.status(isReady ? 200 : 503).json({
-      status: isReady ? 'ready' : 'not-ready',
-      timestamp: new Date().toISOString(),
-      checks: {
-        qdrant: diagnostics.reachable ? 'reachable' : 'unreachable',
-        collection: diagnostics.collectionExists ? 'present' : 'missing',
-      },
-      collectionName: diagnostics.collectionName,
-      pointsCount: diagnostics.pointsCount,
-    });
-  } catch (error) {
-    console.error('Readiness check error:', error);
+  if (!qdrantReachable) {
     res.status(503).json({
       status: 'not-ready',
       timestamp: new Date().toISOString(),
-      error: 'Readiness check failed',
+      checks: {
+        qdrant: 'unreachable',
+        collection: 'unknown',
+      },
     });
+    return;
   }
+
+  let diagnostics: Awaited<ReturnType<typeof getQdrantDiagnostics>>;
+
+  try {
+    diagnostics = await getQdrantDiagnostics();
+  } catch {
+    throw new AppError('Readiness check failed', 503, 'DEPENDENCY_ERROR');
+  }
+
+  const isReady = diagnostics.reachable && diagnostics.collectionExists;
+
+  res.status(isReady ? 200 : 503).json({
+    status: isReady ? 'ready' : 'not-ready',
+    timestamp: new Date().toISOString(),
+    checks: {
+      qdrant: diagnostics.reachable ? 'reachable' : 'unreachable',
+      collection: diagnostics.collectionExists ? 'present' : 'missing',
+    },
+    collectionName: diagnostics.collectionName,
+    pointsCount: diagnostics.pointsCount,
+  });
 }
