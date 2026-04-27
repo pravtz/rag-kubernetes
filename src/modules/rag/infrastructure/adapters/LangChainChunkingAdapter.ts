@@ -1,6 +1,6 @@
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { Document } from '@langchain/core/documents';
-import { IChunkingService } from '../../domain/services/IChunkingService';
+import { IChunkingService } from '../../application/ports/IChunkingService';
 import { RawDocument } from '../../domain/types';
 
 interface ChunkingConfig {

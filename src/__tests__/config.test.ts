@@ -85,5 +85,36 @@ describe('Config module', () => {
 
     expect(config.qdrant.url).toBe('http://localhost:6333');
     expect(config.qdrant.collectionName).toBe('test-collection');
+    expect(config.qdrant.collections).toEqual([
+      { name: 'test-collection', description: '' },
+    ]);
+  });
+
+  it('should parse QDRANT_COLLECTIONS as CSV', () => {
+    process.env.QDRANT_COLLECTIONS = 'docs,normas,gerais';
+    process.env.QDRANT_COLLECTION_DESCRIPTIONS =
+      'Documentos,Normas técnicas,Docs gerais';
+    delete process.env.QDRANT_COLLECTION_NAME;
+
+    const module = require('../config/config');
+    const { config } = module;
+
+    expect(config.qdrant.collections).toEqual([
+      { name: 'docs', description: 'Documentos' },
+      { name: 'normas', description: 'Normas técnicas' },
+      { name: 'gerais', description: 'Docs gerais' },
+    ]);
+  });
+
+  it('should throw when neither QDRANT_COLLECTIONS nor QDRANT_COLLECTION_NAME is set', () => {
+    delete process.env.QDRANT_COLLECTION_NAME;
+    delete process.env.QDRANT_COLLECTIONS;
+
+    expect(() => {
+      jest.resetModules();
+      require('../config/config');
+    }).toThrow(
+      'Missing required environment variable: QDRANT_COLLECTIONS or QDRANT_COLLECTION_NAME',
+    );
   });
 });

@@ -4,7 +4,10 @@ import { IngestPdfUseCase } from '../../../application/use-cases/IngestPdfUseCas
 import { AppError } from '../../../../../shared/errors/AppError';
 
 export class IngestController {
-  constructor(private readonly ingestPdfUseCase: IngestPdfUseCase) {}
+  constructor(
+    private readonly ingestPdfUseCase: IngestPdfUseCase,
+    private readonly validCollectionNames: string[],
+  ) {}
 
   async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     if (!req.file) {
@@ -12,10 +15,28 @@ export class IngestController {
       return;
     }
 
+    const collectionName =
+      (req.body as { collection?: string }).collection ??
+      this.validCollectionNames[0];
+
+    if (!this.validCollectionNames.includes(collectionName)) {
+      next(
+        new AppError(
+          `Unknown collection: ${collectionName}. Valid: ${this.validCollectionNames.join(', ')}`,
+          400,
+          'VALIDATION_ERROR',
+        ),
+      );
+      return;
+    }
+
     const filePath = req.file.path;
 
     try {
-      const result = await this.ingestPdfUseCase.execute({ filePath });
+      const result = await this.ingestPdfUseCase.execute({
+        filePath,
+        collectionName,
+      });
 
       if (result.isFailure) {
         next(result.error);

@@ -8,6 +8,37 @@ function requireEnv(name: string): string {
   return value;
 }
 
+export interface CollectionConfig {
+  name: string;
+  description: string;
+}
+
+function parseCollections(): CollectionConfig[] {
+  const collectionsRaw = process.env.QDRANT_COLLECTIONS;
+  const descriptionsRaw = process.env.QDRANT_COLLECTION_DESCRIPTIONS;
+
+  if (collectionsRaw) {
+    const names = collectionsRaw.split(',').map((s) => s.trim()).filter(Boolean);
+    const descriptions = descriptionsRaw
+      ? descriptionsRaw.split(',').map((s) => s.trim())
+      : names.map(() => '');
+    return names.map((name, i) => ({
+      name,
+      description: descriptions[i] ?? '',
+    }));
+  }
+
+  // Backward compat: single collection from QDRANT_COLLECTION_NAME
+  const singleName = process.env.QDRANT_COLLECTION_NAME;
+  if (singleName) {
+    return [{ name: singleName, description: '' }];
+  }
+
+  throw new Error(
+    'Missing required environment variable: QDRANT_COLLECTIONS or QDRANT_COLLECTION_NAME',
+  );
+}
+
 export const config = {
   port: parseInt(process.env.PORT ?? '3000', 10),
   nodeEnv: process.env.NODE_ENV ?? 'development',
@@ -19,7 +50,8 @@ export const config = {
   qdrant: {
     url: requireEnv('QDRANT_URL'),
     apiKey: process.env.QDRANT_API_KEY,
-    collectionName: requireEnv('QDRANT_COLLECTION_NAME'),
+    collectionName: process.env.QDRANT_COLLECTION_NAME ?? process.env.QDRANT_COLLECTIONS?.split(',')[0]?.trim() ?? 'rag_collection',
+    collections: parseCollections(),
   },
   chunking: {
     chunkSize: parseInt(process.env.CHUNK_SIZE ?? '1000', 10),

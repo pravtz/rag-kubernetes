@@ -2,7 +2,7 @@ import { UseCase } from '../../../../shared/application/UseCase';
 import { Result } from '../../../../shared/application/Result';
 import { AppError } from '../../../../shared/errors/AppError';
 import { ApiStatusDTO } from '../dtos/ApiStatusDTO';
-import { IVectorRepository } from '../../domain/repositories/IVectorRepository';
+import { IVectorRepositoryRegistry } from '../../domain/repositories/IVectorRepositoryRegistry';
 
 interface GetApiStatusInput {
   env: string;
@@ -11,12 +11,12 @@ interface GetApiStatusInput {
 export class GetApiStatusUseCase
   implements UseCase<GetApiStatusInput, Result<ApiStatusDTO, AppError>>
 {
-  constructor(private readonly vectorRepository: IVectorRepository) {}
+  constructor(private readonly registry: IVectorRepositoryRegistry) {}
 
   async execute(
     input: GetApiStatusInput,
   ): Promise<Result<ApiStatusDTO, AppError>> {
-    const qdrantReachable = await this.vectorRepository.isReachable();
+    const qdrantReachable = await this.registry.isReachable();
 
     return Result.ok<ApiStatusDTO>({
       status: qdrantReachable ? 'ok' : 'degraded',

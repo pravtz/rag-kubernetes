@@ -12,18 +12,18 @@ Legenda:
 
 ## Status Geral de Execução
 
-> Última atualização: **—**
+> Última atualização: **27/04/2026**
 
 | Sprint | Nome | Status | Progresso |
 |:---:|---|:---:|:---:|
-| 1 | Domain Layer (VOs + Interfaces + Errors) | `⬜ Pendente` | 0/6 |
-| 2 | Application Layer (Ports + DTOs) | `⬜ Pendente` | 0/4 |
-| 3 | Application Layer (Use Cases) + Config | `⬜ Pendente` | 0/7 |
-| 4 | Infrastructure Layer (Adapters + Persistence) | `⬜ Pendente` | 0/4 |
-| 5 | Infrastructure Layer (Controllers + Routes) | `⬜ Pendente` | 0/5 |
-| 6 | Composition Root + Integração | `⬜ Pendente` | 0/5 |
-| 7 | Testes de Integração + Documentação | `⬜ Pendente` | 0/5 |
-| | | **Total** | **0/36** |
+| 1 | Domain Layer (VOs + Interfaces + Errors) | `✅ Concluído` | 6/6 |
+| 2 | Application Layer (Ports + DTOs) | `✅ Concluído` | 4/4 |
+| 3 | Application Layer (Use Cases) + Config | `✅ Concluído` | 7/7 |
+| 4 | Infrastructure Layer (Adapters + Persistence) | `✅ Concluído` | 4/4 |
+| 5 | Infrastructure Layer (Controllers + Routes) | `✅ Concluído` | 5/5 |
+| 6 | Composition Root + Integração | `✅ Concluído` | 4/5 |
+| 7 | Testes de Integração + Documentação | `🔄 Em andamento` | 3/5 |
+| | | **Total** | **33/36** |
 
 Status: `⬜ Pendente` · `🔄 Em andamento` · `✅ Concluído` · `🚫 Bloqueado`
 
@@ -32,53 +32,53 @@ Status: `⬜ Pendente` · `🔄 Em andamento` · `✅ Concluído` · `🚫 Bloqu
 ## Checklist Completo de Tarefas
 
 ### Sprint 1 — Domain Layer
-- [ ] 1.1 `[P][B]` Criar VO `QueryIntent`
-- [ ] 1.2 `[P][B]` Criar VO `ScoredChunk`
-- [ ] 1.3 `[P][B]` Criar interface `IVectorRepositoryRegistry`
-- [ ] 1.4 `[P]` Adicionar `collectionName` ao `ChunkMetadata`
-- [ ] 1.5 `[P]` Adicionar novos Domain Errors
-- [ ] 1.6 `[P]` Testes unitários dos novos VOs
+- [x] 1.1 `[P][B]` Criar VO `QueryIntent`
+- [x] 1.2 `[P][B]` Criar VO `ScoredChunk`
+- [x] 1.3 `[P][B]` Criar interface `IVectorRepositoryRegistry`
+- [x] 1.4 `[P]` Adicionar `collectionName` ao `ChunkMetadata`
+- [x] 1.5 `[P]` Adicionar novos Domain Errors
+- [x] 1.6 `[P]` Testes unitários dos novos VOs
 
 ### Sprint 2 — Application Ports + DTOs
-- [ ] 2.1 `[P][B]` Criar port `IQueryRouter`
-- [ ] 2.2 `[P][B]` Criar port `IReranker`
-- [ ] 2.3 `[P]` Criar DTO `RoutedQueryRequestDTO`
-- [ ] 2.4 `[P]` Mover `IChunkingService` para ports
+- [x] 2.1 `[P][B]` Criar port `IQueryRouter`
+- [x] 2.2 `[P][B]` Criar port `IReranker`
+- [x] 2.3 `[P]` Criar DTO `RoutedQueryRequestDTO`
+- [x] 2.4 `[P]` Mover `IChunkingService` para ports
 
 ### Sprint 3 — Use Cases + Config
-- [ ] 3.1 `[P][B]` Criar `RoutedQueryUseCase`
-- [ ] 3.2 `[P][B]` Atualizar `config.ts` para multi-collection
-- [ ] 3.3 `[P]` Atualizar `.env.example`
-- [ ] 3.4 `[S]` Atualizar `IngestPdfUseCase`
-- [ ] 3.5 `[S]` Atualizar `GetApiStatusUseCase`
-- [ ] 3.6 `[S]` Atualizar `GetReadinessUseCase`
-- [ ] 3.7 `[P]` Testes do `RoutedQueryUseCase`
+- [x] 3.1 `[P][B]` Criar `RoutedQueryUseCase`
+- [x] 3.2 `[P][B]` Atualizar `config.ts` para multi-collection
+- [x] 3.3 `[P]` Atualizar `.env.example`
+- [x] 3.4 `[S]` Atualizar `IngestPdfUseCase`
+- [x] 3.5 `[S]` Atualizar `GetApiStatusUseCase`
+- [x] 3.6 `[S]` Atualizar `GetReadinessUseCase`
+- [x] 3.7 `[P]` Testes do `RoutedQueryUseCase`
 
 ### Sprint 4 — Adapters + Persistence
-- [ ] 4.1 `[P][B]` Criar `QdrantVectorRepositoryRegistry`
-- [ ] 4.2 `[P][B]` Criar `LlmQueryRouterAdapter`
-- [ ] 4.3 `[P][B]` Criar `RRFRerankerAdapter`
-- [ ] 4.4 `[P]` Testes unitários dos adapters
+- [x] 4.1 `[P][B]` Criar `QdrantVectorRepositoryRegistry`
+- [x] 4.2 `[P][B]` Criar `LlmQueryRouterAdapter`
+- [x] 4.3 `[P][B]` Criar `RRFRerankerAdapter`
+- [x] 4.4 `[P]` Testes unitários dos adapters
 
 ### Sprint 5 — Controllers + Routes
-- [ ] 5.1 `[P]` Atualizar `QueryController`
-- [ ] 5.2 `[P]` Atualizar `IngestController`
-- [ ] 5.3 `[P]` Criar `GetQdrantInfoUseCase`
-- [ ] 5.4 `[S]` Atualizar rotas
-- [ ] 5.5 `[P]` Testes dos controllers
+- [x] 5.1 `[P]` Atualizar `QueryController`
+- [x] 5.2 `[P]` Atualizar `IngestController`
+- [x] 5.3 `[P]` Criar `GetQdrantInfoUseCase`
+- [x] 5.4 `[S]` Atualizar rotas
+- [x] 5.5 `[P]` Testes dos controllers
 
 ### Sprint 6 — Composition Root + Integração
-- [ ] 6.1 `[S][B]` Atualizar Composition Root (`index.ts`)
-- [ ] 6.2 `[S]` Mover `HealthController` para módulo RAG
-- [ ] 6.3 `[S]` Atualizar `app.ts`
+- [x] 6.1 `[S][B]` Atualizar Composition Root (`index.ts`)
+- [x] 6.2 `[S]` Mover `HealthController` para módulo RAG
+- [x] 6.3 `[S]` Atualizar `app.ts`
 - [ ] 6.4 `[S]` Limpeza: remover camada legada
 - [ ] 6.5 `[S]` Smoke test manual
 
 ### Sprint 7 — Testes de Integração + Docs
-- [ ] 7.1 `[P]` Testes de integração do fluxo completo
-- [ ] 7.2 `[P]` Testes do QueryRouter adapter
+- [x] 7.1 `[P]` Testes de integração do fluxo completo
+- [x] 7.2 `[P]` Testes do QueryRouter adapter
 - [ ] 7.3 `[P]` Atualizar `README.md`
-- [ ] 7.4 `[P]` Atualizar `.env.example` (final)
+- [x] 7.4 `[P]` Atualizar `.env.example` (final)
 - [ ] 7.5 `[P]` Criar ADR `001-multi-collection-query-router.md`
 
 ---

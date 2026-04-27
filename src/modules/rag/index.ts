@@ -2,18 +2,24 @@ import { OpenAIEmbeddings } from '@langchain/openai';
 import { config } from '../../config/config';
 import { QdrantClientFactory } from './infrastructure/persistence/qdrant/QdrantClientFactory';
 import { QdrantVectorRepository } from './infrastructure/persistence/qdrant/QdrantVectorRepository';
+import { QdrantVectorRepositoryRegistry } from './infrastructure/persistence/qdrant/QdrantVectorRepositoryRegistry';
 import { LangChainLlmAdapter } from './infrastructure/adapters/LangChainLlmAdapter';
 import { LangChainPdfLoaderAdapter } from './infrastructure/adapters/LangChainPdfLoaderAdapter';
 import { LangChainChunkingAdapter } from './infrastructure/adapters/LangChainChunkingAdapter';
+import { LlmQueryRouterAdapter } from './infrastructure/adapters/LlmQueryRouterAdapter';
+import { RRFRerankerAdapter } from './infrastructure/adapters/RRFRerankerAdapter';
 import { IngestPdfUseCase } from './application/use-cases/IngestPdfUseCase';
 import { QueryDocumentsUseCase } from './application/use-cases/QueryDocumentsUseCase';
+import { RoutedQueryUseCase } from './application/use-cases/RoutedQueryUseCase';
 import { GetApiStatusUseCase } from './application/use-cases/GetApiStatusUseCase';
 import { GetReadinessUseCase } from './application/use-cases/GetReadinessUseCase';
+import { GetQdrantInfoUseCase } from './application/use-cases/GetQdrantInfoUseCase';
 import { IngestController } from './infrastructure/http/controllers/IngestController';
 import { QueryController } from './infrastructure/http/controllers/QueryController';
+import { HealthController } from './infrastructure/http/controllers/HealthController';
 import { createRagRoutes } from './infrastructure/http/routes/ragRoutes';
-import { HealthController } from '../../shared/infrastructure/http/controllers/HealthController';
-import { createHealthRoutes } from '../../shared/infrastructure/http/routes/healthRoutes';
+import { createHealthRoutes } from './infrastructure/http/routes/healthRoutes';
+import { IVectorRepository } from './domain/repositories/IVectorRepository';
 
 // --- Infrastructure ---
 
@@ -27,11 +33,20 @@ const embeddings = new OpenAIEmbeddings({
   model: config.openai.embeddingModel,
 });
 
-const vectorRepository = new QdrantVectorRepository(qdrantClient, embeddings, {
-  collectionName: config.qdrant.collectionName,
-  qdrantUrl: config.qdrant.url,
-  embeddingModel: config.openai.embeddingModel,
-});
+// Build one QdrantVectorRepository per collection
+const repositoryMap = new Map<string, IVectorRepository>();
+for (const col of config.qdrant.collections) {
+  repositoryMap.set(
+    col.name,
+    new QdrantVectorRepository(qdrantClient, embeddings, {
+      collectionName: col.name,
+      qdrantUrl: config.qdrant.url,
+      embeddingModel: config.openai.embeddingModel,
+    }),
+  );
+}
+
+const registry = new QdrantVectorRepositoryRegistry(repositoryMap);
 
 const llmService = new LangChainLlmAdapter(
   config.openai.apiKey,
@@ -45,33 +60,56 @@ const chunkingService = new LangChainChunkingAdapter({
   chunkOverlap: config.chunking.chunkOverlap,
 });
 
+const queryRouter = new LlmQueryRouterAdapter(
+  config.openai.apiKey,
+  config.openai.chatModel,
+);
+
+const reranker = new RRFRerankerAdapter();
+
 // --- Use Cases ---
 
 const ingestPdfUseCase = new IngestPdfUseCase(
   pdfLoader,
   chunkingService,
-  vectorRepository,
+  registry,
 );
 
 const queryDocumentsUseCase = new QueryDocumentsUseCase(
-  vectorRepository,
+  repositoryMap.values().next().value!,
   llmService,
 );
 
-const getApiStatusUseCase = new GetApiStatusUseCase(vectorRepository);
-const getReadinessUseCase = new GetReadinessUseCase(vectorRepository);
+const routedQueryUseCase = new RoutedQueryUseCase(
+  registry,
+  queryRouter,
+  reranker,
+  llmService,
+);
+
+const getApiStatusUseCase = new GetApiStatusUseCase(registry);
+const getReadinessUseCase = new GetReadinessUseCase(registry);
+const getQdrantInfoUseCase = new GetQdrantInfoUseCase(registry);
 
 // --- Controllers ---
 
-const ingestController = new IngestController(ingestPdfUseCase);
+const collectionInfos = config.qdrant.collections.map((c) => ({
+  name: c.name,
+  description: c.description,
+}));
+
+const ingestController = new IngestController(
+  ingestPdfUseCase,
+  registry.getCollectionNames(),
+);
 
 const queryController = new QueryController(
-  queryDocumentsUseCase,
-  vectorRepository,
+  routedQueryUseCase,
+  getQdrantInfoUseCase,
   {
     topK: config.chunking.topK,
     embeddingModel: config.openai.embeddingModel,
-    collectionName: config.qdrant.collectionName,
+    collections: collectionInfos,
   },
 );
 

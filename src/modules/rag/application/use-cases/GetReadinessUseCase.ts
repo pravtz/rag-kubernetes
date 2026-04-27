@@ -3,23 +3,25 @@ import { Result } from '../../../../shared/application/Result';
 import { AppError } from '../../../../shared/errors/AppError';
 import { InfrastructureError } from '../../../../shared/errors/InfrastructureError';
 import { ReadinessDTO } from '../dtos/ReadinessDTO';
-import { IVectorRepository } from '../../domain/repositories/IVectorRepository';
+import { IVectorRepositoryRegistry } from '../../domain/repositories/IVectorRepositoryRegistry';
 
 export class GetReadinessUseCase
   implements UseCase<void, Result<ReadinessDTO, AppError>>
 {
-  constructor(private readonly vectorRepository: IVectorRepository) {}
+  constructor(private readonly registry: IVectorRepositoryRegistry) {}
 
   async execute(): Promise<Result<ReadinessDTO, AppError>> {
     let qdrantReachable = false;
 
     try {
-      qdrantReachable = await this.vectorRepository.isReachable();
+      qdrantReachable = await this.registry.isReachable();
     } catch {
-      throw new InfrastructureError(
-        'Readiness check failed',
-        503,
-        'DEPENDENCY_ERROR',
+      return Result.fail(
+        new InfrastructureError(
+          'Readiness check failed',
+          503,
+          'DEPENDENCY_ERROR',
+        ),
       );
     }
 
@@ -34,28 +36,41 @@ export class GetReadinessUseCase
       });
     }
 
-    let diagnostics;
+    let allDiagnostics;
     try {
-      diagnostics = await this.vectorRepository.getDiagnostics();
+      allDiagnostics = await this.registry.getDiagnosticsAll();
     } catch {
-      throw new InfrastructureError(
-        'Readiness check failed',
-        503,
-        'DEPENDENCY_ERROR',
+      return Result.fail(
+        new InfrastructureError(
+          'Readiness check failed',
+          503,
+          'DEPENDENCY_ERROR',
+        ),
       );
     }
 
-    const isReady = diagnostics.reachable && diagnostics.collectionExists;
+    const allReady = allDiagnostics.every(
+      (d) => d.reachable && d.collectionExists,
+    );
+
+    const collectionNames = allDiagnostics
+      .map((d) => d.collectionName)
+      .join(', ');
+
+    const totalPoints = allDiagnostics.reduce(
+      (sum, d) => sum + (d.pointsCount ?? 0),
+      0,
+    );
 
     return Result.ok<ReadinessDTO>({
-      status: isReady ? 'ready' : 'not-ready',
+      status: allReady ? 'ready' : 'not-ready',
       timestamp: new Date().toISOString(),
       checks: {
-        qdrant: diagnostics.reachable ? 'reachable' : 'unreachable',
-        collection: diagnostics.collectionExists ? 'present' : 'missing',
+        qdrant: 'reachable',
+        collection: allReady ? 'present' : 'missing',
       },
-      collectionName: diagnostics.collectionName,
-      pointsCount: diagnostics.pointsCount,
+      collectionName: collectionNames,
+      pointsCount: totalPoints,
     });
   }
 }

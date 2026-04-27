@@ -5,13 +5,14 @@ import { AppError } from '../../../../shared/errors/AppError';
 import { IngestResultDTO } from '../dtos/IngestResultDTO';
 import { IngestResultMapper } from '../mappers/IngestResultMapper';
 import { IPdfLoader } from '../ports/IPdfLoader';
-import { IChunkingService } from '../../domain/services/IChunkingService';
-import { IVectorRepository } from '../../domain/repositories/IVectorRepository';
+import { IChunkingService } from '../ports/IChunkingService';
+import { IVectorRepositoryRegistry } from '../../domain/repositories/IVectorRepositoryRegistry';
 import { Chunk } from '../../domain/value-objects/Chunk';
 import { ChunkMetadata } from '../../domain/value-objects/ChunkMetadata';
 
 interface IngestPdfInput {
   filePath: string;
+  collectionName: string;
 }
 
 export class IngestPdfUseCase
@@ -20,12 +21,14 @@ export class IngestPdfUseCase
   constructor(
     private readonly pdfLoader: IPdfLoader,
     private readonly chunkingService: IChunkingService,
-    private readonly vectorRepository: IVectorRepository,
+    private readonly registry: IVectorRepositoryRegistry,
   ) {}
 
   async execute(
     input: IngestPdfInput,
   ): Promise<Result<IngestResultDTO, AppError>> {
+    const vectorRepository = this.registry.get(input.collectionName);
+
     const rawDocs = await this.pdfLoader.load(input.filePath);
     const splitDocs = await this.chunkingService.split(rawDocs);
 
@@ -37,12 +40,13 @@ export class IngestPdfUseCase
           chunkIndex: index,
           source: (doc.metadata.source as string) ?? '',
           page: (doc.metadata.page as number) ?? 0,
+          collectionName: input.collectionName,
         }),
       }),
     );
 
-    await this.vectorRepository.ensureCollection();
-    await this.vectorRepository.addDocuments(chunks);
+    await vectorRepository.ensureCollection();
+    await vectorRepository.addDocuments(chunks);
 
     return Result.ok(IngestResultMapper.toDTO(chunks.length));
   }

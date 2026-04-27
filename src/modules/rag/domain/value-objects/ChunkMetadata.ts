@@ -5,6 +5,7 @@ export interface ChunkMetadataProps {
   chunkIndex: number;
   source: string;
   page: number;
+  collectionName?: string;
 }
 
 export class ChunkMetadata extends ValueObject<ChunkMetadataProps> {
@@ -24,6 +25,10 @@ export class ChunkMetadata extends ValueObject<ChunkMetadataProps> {
     return this.props.page;
   }
 
+  get collectionName(): string | undefined {
+    return this.props.collectionName;
+  }
+
   private constructor(props: ChunkMetadataProps) {
     super(props);
   }
@@ -38,7 +43,8 @@ export class ChunkMetadata extends ValueObject<ChunkMetadataProps> {
       this.props.chunkId === other.props.chunkId &&
       this.props.chunkIndex === other.props.chunkIndex &&
       this.props.source === other.props.source &&
-      this.props.page === other.props.page
+      this.props.page === other.props.page &&
+      this.props.collectionName === other.props.collectionName
     );
   }
 }
