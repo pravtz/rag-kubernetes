@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { config } from './config/config';
 import ragRoutes from './routes/ragRoutes';
+import { errorHandler, notFoundHandler } from './middleware/errorMiddleware';
 
 const app = express();
 
@@ -14,6 +15,8 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/rag', ragRoutes);
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 app.listen(config.port, () => {
   console.log(`Server running on port ${config.port} [${config.nodeEnv}]`);

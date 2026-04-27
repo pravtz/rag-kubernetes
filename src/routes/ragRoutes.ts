@@ -1,5 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { uploadPdf } from '../middleware/uploadMiddleware';
+import { asyncHandler } from '../utils/asyncHandler';
+import { AppError } from '../utils/appError';
 import {
   ingest,
   query,
@@ -10,9 +12,9 @@ import {
 
 const router = Router();
 
-router.get('/status', getApiStatus);
-router.get('/ready', getApiReadiness);
-router.get('/qdrant-info', getQdrantInfo);
+router.get('/status', asyncHandler(getApiStatus));
+router.get('/ready', asyncHandler(getApiReadiness));
+router.get('/qdrant-info', asyncHandler(getQdrantInfo));
 
 // Wrap multer so its errors are forwarded as JSON rather than raw Express errors
 router.post(
@@ -20,17 +22,17 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     uploadPdf(req, res, (err) => {
       if (err) {
-        res.status(400).json({ error: (err as Error).message });
+        next(new AppError((err as Error).message, 400, 'UPLOAD_ERROR'));
         return;
       }
       next();
     });
   },
-  ingest,
+  asyncHandler(ingest),
 );
 
-router.post('/query', query);
-router.post('/question', query);
-router.post('/pergunta', query);
+router.post('/query', asyncHandler(query));
+router.post('/question', asyncHandler(query));
+router.post('/pergunta', asyncHandler(query));
 
 export default router;

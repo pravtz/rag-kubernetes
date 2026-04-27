@@ -1,13 +1,14 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import fs from 'fs';
 import { ingestPdf, generateStreamingResponse } from '../services/ragService';
 import { retrieveContext } from '../services/queryService';
 import { config } from '../config/config';
 import { getQdrantDiagnostics, isQdrantReachable } from '../utils/qdrant';
+import { AppError } from '../utils/appError';
 
-export async function ingest(req: Request, res: Response): Promise<void> {
+export async function ingest(req: Request, res: Response, next: NextFunction): Promise<void> {
   if (!req.file) {
-    res.status(400).json({ error: 'No PDF file provided' });
+    next(new AppError('No PDF file provided', 400, 'VALIDATION_ERROR'));
     return;
   }
 
@@ -20,8 +21,7 @@ export async function ingest(req: Request, res: Response): Promise<void> {
       chunks: result.chunks,
     });
   } catch (error) {
-    console.error('Ingestion error:', error);
-    res.status(500).json({ error: 'Failed to ingest PDF' });
+    next(error);
   } finally {
     // Remove the temporary file regardless of success or failure
     fs.unlink(filePath, (err) => {
@@ -34,7 +34,7 @@ export async function query(req: Request, res: Response): Promise<void> {
   const { question } = req.body as { question?: string };
 
   if (!question || question.trim() === '') {
-    res.status(400).json({ error: 'question is required' });
+    throw new AppError('question is required', 400, 'VALIDATION_ERROR');
     return;
   }
 
@@ -53,11 +53,14 @@ export async function query(req: Request, res: Response): Promise<void> {
 
     res.end();
   } catch (error) {
-    console.error('Query error:', error);
-    // Only send error payload if headers have not been flushed yet
-    if (!res.headersSent) {
-      res.status(500).json({ error: 'Failed to process query' });
+    // If the stream already started, we can only close the response.
+    if (res.headersSent) {
+      console.error('Streaming query failed after headers were sent:', error);
+      res.end();
+      return;
     }
+
+    throw error;
   }
 }
 
