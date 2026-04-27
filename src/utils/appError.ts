@@ -1,22 +1,2 @@
-export class AppError extends Error {
-  public readonly statusCode: number;
-  public readonly code: string;
-  public readonly isOperational: boolean;
-  public readonly details?: unknown;
-
-  constructor(
-    message: string,
-    statusCode = 500,
-    code = 'INTERNAL_ERROR',
-    details?: unknown,
-  ) {
-    super(message);
-    this.name = 'AppError';
-    this.statusCode = statusCode;
-    this.code = code;
-    this.isOperational = true;
-    this.details = details;
-
-    Error.captureStackTrace?.(this, this.constructor);
-  }
-}
+// Re-export from new location for backward compatibility
+export { AppError } from '../shared/errors/AppError';

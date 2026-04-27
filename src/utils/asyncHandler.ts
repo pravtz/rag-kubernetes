@@ -1,13 +1,2 @@
-import { NextFunction, Request, RequestHandler, Response } from 'express';
-
-type AsyncRequestHandler = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => Promise<void>;
-
-export function asyncHandler(handler: AsyncRequestHandler): RequestHandler {
-  return (req, res, next) => {
-    Promise.resolve(handler(req, res, next)).catch(next);
-  };
-}
+// Re-export from new location for backward compatibility
+export { asyncHandler } from '../shared/infrastructure/middleware/asyncHandler';

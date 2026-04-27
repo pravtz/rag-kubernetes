@@ -5,6 +5,12 @@
     "lib": ["ES2020"],
     "outDir": "dist",
     "rootDir": "src",
+    "baseUrl": "src",
+    "paths": {
+      "@modules/*": ["modules/*"],
+      "@shared/*": ["shared/*"],
+      "@config/*": ["config/*"]
+    },
     "strict": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
