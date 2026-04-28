@@ -6,7 +6,7 @@ import { ScoredChunk } from '../../domain/value-objects/ScoredChunk';
 import { IVectorRepositoryRegistry } from '../../domain/repositories/IVectorRepositoryRegistry';
 import { IQueryRouter, CollectionInfo } from '../ports/IQueryRouter';
 import { IReranker } from '../ports/IReranker';
-import { ILlmService } from '../ports/ILlmService';
+import { ILlmService, LlmMetrics } from '../ports/ILlmService';
 import { RoutedQueryRequestDTO } from '../dtos/RoutedQueryRequestDTO';
 import { CollectionTarget } from '../../domain/value-objects/QueryIntent';
 
@@ -18,7 +18,7 @@ interface RoutedQueryInput {
 }
 
 export class RoutedQueryUseCase
-  implements UseCase<RoutedQueryInput, Result<void, AppError>>
+  implements UseCase<RoutedQueryInput, Result<LlmMetrics, AppError>>
 {
   constructor(
     private readonly registry: IVectorRepositoryRegistry,
@@ -27,7 +27,7 @@ export class RoutedQueryUseCase
     private readonly llmService: ILlmService,
   ) {}
 
-  async execute(input: RoutedQueryInput): Promise<Result<void, AppError>> {
+  async execute(input: RoutedQueryInput): Promise<Result<LlmMetrics, AppError>> {
     const question = Question.create(input.dto.question);
 
     let targets: CollectionTarget[];
@@ -62,12 +62,12 @@ export class RoutedQueryUseCase
     const allChunks = searchResults.flat();
 
     if (allChunks.length === 0) {
-      await this.llmService.streamResponse(
+      const metrics = await this.llmService.streamResponse(
         question.value,
         '',
         input.onToken,
       );
-      return Result.ok(undefined);
+      return Result.ok(metrics);
     }
 
     // Rerank results from multiple collections
@@ -80,12 +80,12 @@ export class RoutedQueryUseCase
       .map((sc) => sc.chunk.content)
       .join('\n\n---\n\n');
 
-    await this.llmService.streamResponse(
+    const metrics = await this.llmService.streamResponse(
       question.value,
       context,
       input.onToken,
     );
 
-    return Result.ok(undefined);
+    return Result.ok(metrics);
   }
 }

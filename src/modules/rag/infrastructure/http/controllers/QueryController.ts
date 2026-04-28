@@ -45,6 +45,12 @@ export class QueryController {
         console.error('Query use case failed:', result.error);
       }
 
+      if (result.isOk && result.value) {
+        const metrics = result.value;
+        res.write(`\n\n---METRICS---\n${JSON.stringify(metrics)}`);
+        console.log('[QueryMetrics]', JSON.stringify(metrics));
+      }
+
       res.end();
     } catch (error) {
       if (res.headersSent) {

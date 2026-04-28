@@ -2,7 +2,7 @@ import { RoutedQueryUseCase } from '../modules/rag/application/use-cases/RoutedQ
 import { IVectorRepositoryRegistry } from '../modules/rag/domain/repositories/IVectorRepositoryRegistry';
 import { IQueryRouter } from '../modules/rag/application/ports/IQueryRouter';
 import { IReranker } from '../modules/rag/application/ports/IReranker';
-import { ILlmService } from '../modules/rag/application/ports/ILlmService';
+import { ILlmService, LlmMetrics } from '../modules/rag/application/ports/ILlmService';
 import { QueryIntent } from '../modules/rag/domain/value-objects/QueryIntent';
 import { ScoredChunk } from '../modules/rag/domain/value-objects/ScoredChunk';
 import { Chunk } from '../modules/rag/domain/value-objects/Chunk';
@@ -53,8 +53,17 @@ function createMocks() {
     ]),
   };
 
+  const fakeLlmMetrics: LlmMetrics = {
+    inputTokens: 100,
+    outputTokens: 50,
+    totalTokens: 150,
+    durationMs: 1200,
+    tokensPerSecond: 41.67,
+    model: 'gpt-4o-mini',
+  };
+
   const llmService: jest.Mocked<ILlmService> = {
-    streamResponse: jest.fn().mockResolvedValue(undefined),
+    streamResponse: jest.fn().mockResolvedValue(fakeLlmMetrics),
   };
 
   return { registry, queryRouter, reranker, llmService, mockRepo };
