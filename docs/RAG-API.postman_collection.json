@@ -1,0 +1,201 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "RAG API",
+		"description": "RAG API — Ingestão de PDFs e consulta com LLM via Qdrant",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "collection",
+			"value": "docs_padronizacao",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Health & Status",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/health",
+						"description": "Verificação básica de que a API está respondendo."
+					},
+					"response": []
+				},
+				{
+					"name": "API Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/api/rag/status",
+						"description": "Status operacional com verificação de dependências (Qdrant)."
+					},
+					"response": []
+				},
+				{
+					"name": "Readiness Probe",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/api/rag/ready",
+						"description": "Probe de readiness para K8s/orquestradores."
+					},
+					"response": []
+				},
+				{
+					"name": "Qdrant Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/api/rag/qdrant-info",
+						"description": "Informações detalhadas sobre cada collection e estado do Qdrant."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Ingest",
+			"item": [
+				{
+					"name": "Upload PDF (collection padrão)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "",
+									"description": "Arquivo PDF (máx 50 MB)"
+								}
+							]
+						},
+						"url": "{{baseUrl}}/api/rag/ingest",
+						"description": "Upload de PDF para a collection padrão (primeira configurada)."
+					},
+					"response": []
+				},
+				{
+					"name": "Upload PDF (collection específica)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "",
+									"description": "Arquivo PDF (máx 50 MB)"
+								},
+								{
+									"key": "collection",
+									"value": "{{collection}}",
+									"type": "text",
+									"description": "Collection de destino: docs_padronizacao, relatorio_de_custos ou docs_gerais"
+								}
+							]
+						},
+						"url": "{{baseUrl}}/api/rag/ingest",
+						"description": "Upload de PDF para uma collection específica."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Query",
+			"item": [
+				{
+					"name": "Query (routing automático)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"question\": \"O que é RAG?\"\n}"
+						},
+						"url": "{{baseUrl}}/api/rag/query",
+						"description": "Consulta com routing automático. Resposta em streaming (text/plain)."
+					},
+					"response": []
+				},
+				{
+					"name": "Query (forçar collections)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"question\": \"Quais são as normas de segurança?\",\n  \"forceCollections\": [\"{{collection}}\"]\n}"
+						},
+						"url": "{{baseUrl}}/api/rag/query",
+						"description": "Consulta forçando busca em collections específicas."
+					},
+					"response": []
+				},
+				{
+					"name": "Question (alias)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"question\": \"O que é RAG?\"\n}"
+						},
+						"url": "{{baseUrl}}/api/rag/question",
+						"description": "Alias para /api/rag/query."
+					},
+					"response": []
+				},
+				{
+					"name": "Pergunta (alias)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"question\": \"O que é RAG?\"\n}"
+						},
+						"url": "{{baseUrl}}/api/rag/pergunta",
+						"description": "Alias para /api/rag/query (português)."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

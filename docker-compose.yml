@@ -10,7 +10,7 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
     healthcheck:
-      test: ['CMD-SHELL', 'curl -f http://localhost:6333/healthz || exit 1']
+      test: ['CMD-SHELL', 'bash -c "echo > /dev/tcp/localhost/6333"']
       interval: 15s
       timeout: 5s
       start_period: 10s
@@ -28,6 +28,8 @@ services:
       - '3000:3000'
     env_file:
       - .env
+    environment:
+      - QDRANT_URL=http://qdrant:6333
     depends_on:
       qdrant:
         condition: service_healthy

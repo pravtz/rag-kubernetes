@@ -199,7 +199,7 @@ export const swaggerDocument = {
               collection: { type: 'string', example: 'present' },
             },
           },
-          collectionName: { type: 'string', example: 'rag_collection' },
+          collectionName: { type: 'string', example: 'docs_padronizacao, docs_normas, docs_gerais' },
           pointsCount: { type: 'number', example: 42 },
         },
       },
@@ -208,17 +208,20 @@ export const swaggerDocument = {
         properties: {
           status: { type: 'string', example: 'ok' },
           timestamp: { type: 'string', format: 'date-time' },
-          qdrant: {
-            type: 'object',
-            properties: {
-              qdrantUrl: { type: 'string', example: 'http://localhost:6333' },
-              collectionName: { type: 'string', example: 'rag_collection' },
-              reachable: { type: 'boolean', example: true },
-              collectionExists: { type: 'boolean', example: true },
-              totalCollections: { type: 'number', example: 1 },
-              pointsCount: { type: 'number', example: 42 },
-              expectedVectorSize: { type: 'number', example: 1536 },
-              collectionStatus: { type: 'string', example: 'green' },
+          collections: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                storeUrl: { type: 'string', example: 'http://qdrant:6333' },
+                collectionName: { type: 'string', example: 'docs_padronizacao' },
+                reachable: { type: 'boolean', example: true },
+                collectionExists: { type: 'boolean', example: true },
+                totalCollections: { type: 'number', example: 3 },
+                pointsCount: { type: 'number', nullable: true, example: 42 },
+                expectedVectorSize: { type: 'number', example: 1536 },
+                collectionStatus: { type: 'string', nullable: true, example: 'green' },
+              },
             },
           },
           rag: {
@@ -229,7 +232,11 @@ export const swaggerDocument = {
                 type: 'string',
                 example: 'text-embedding-3-small',
               },
-              collectionName: { type: 'string', example: 'rag_collection' },
+              collectionNames: {
+                type: 'array',
+                items: { type: 'string' },
+                example: ['docs_padronizacao', 'docs_normas', 'docs_gerais'],
+              },
             },
           },
         },
@@ -242,6 +249,17 @@ export const swaggerDocument = {
             type: 'string',
             example: 'O que é RAG?',
             description: 'Pergunta a ser respondida com base nos documentos indexados',
+          },
+          topK: {
+            type: 'number',
+            example: 4,
+            description: 'Número de chunks para retrieval (opcional, usa config padrão)',
+          },
+          forceCollections: {
+            type: 'array',
+            items: { type: 'string' },
+            example: ['docs_padronizacao'],
+            description: 'Força busca em collections específicas, ignorando o routing automático',
           },
         },
       },
